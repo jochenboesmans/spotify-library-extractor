@@ -11,7 +11,7 @@ Once installed, clone this repository and install its dependencies running:
 ### Create your own Spotify credentials
 You will need to register your app and get your own credentials from the Spotify for Developers Dashboard.
 
-To do so, go to [your Spotify for Developers Dashboard](https://beta.developer.spotify.com/dashboard) and create your application. You will also need to register this Redirect URI:
+To do so, go to [your Spotify for Developers Dashboard](https://beta.developer.spotify.com/dashboard) and create your application. You will also need to register this Redirect URI in your dashboard:
 
 * http://localhost:8888/callback
 
@@ -20,8 +20,6 @@ Once you have created your app, create `.client_id.js` and `.client_secret.js` f
 ```javascript
 module.exports = CLIENT_ID_OR_SECRET_GOES_HERE
 ```
-
-Afterwards, add your Spotify app's `redirect_uri` to `app.js`.
 
 ## Run
 In the main directory, run:
