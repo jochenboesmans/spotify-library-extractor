@@ -12,10 +12,11 @@ var request = require('request'); // "Request" library
 var cors = require('cors');
 var querystring = require('querystring');
 var cookieParser = require('cookie-parser');
+var fs = require('fs');
 
-var client_id = 'CLIENT_ID'; // Your client id
-var client_secret = 'CLIENT_SECRET'; // Your secret
-var redirect_uri = 'REDIRECT_URI'; // Your redirect uri
+var client_id = require('./client_id.js'); // Your client id
+var client_secret = require('./client_secret.js'); // Your secret
+var redirect_uri = 'http://localhost:8888/callback'; // Your redirect uri
 
 /**
  * Generates a random string containing numbers and letters
@@ -46,7 +47,7 @@ app.get('/login', function(req, res) {
   res.cookie(stateKey, state);
 
   // your application requests authorization
-  var scope = 'user-read-private user-read-email';
+  var scope = 'user-read-private user-read-email user-library-read user-library-modify';
   res.redirect('https://accounts.spotify.com/authorize?' +
     querystring.stringify({
       response_type: 'code',
@@ -91,17 +92,41 @@ app.get('/callback', function(req, res) {
 
         var access_token = body.access_token,
             refresh_token = body.refresh_token;
+	    offset = 0;
+	    limit = 50;
 
-        var options = {
-          url: 'https://api.spotify.com/v1/me',
-          headers: { 'Authorization': 'Bearer ' + access_token },
-          json: true
-        };
+	var allTracks = [];
 
-        // use the access token to access the Spotify Web API
-        request.get(options, function(error, response, body) {
-          console.log(body);
-        });
+	const callbackFunction = function(error, response, body) {
+		  if (!error) {
+			  const tracks = JSON.parse(body).items.map(item => ({
+				  name: item.track.name,
+				  artists: item.track.artists.map(a => a.name)
+			  }));
+
+			  console.log(`track: ${JSON.parse(body).offset}`);
+
+			  allTracks.push(tracks);
+
+			  if (JSON.parse(body).next && JSON.parse(body).next !== "") {
+			  var options = {
+				  url: JSON.parse(body).next,
+				  headers: { 'Authorization': 'Bearer ' + access_token }
+			  }
+			  return request.get(options, callbackFunction);
+			  } else {
+				  return fs.writeFile("./tracks.json", JSON.stringify(allTracks), err => { console.log("done"); } );
+			  }
+		  }
+	  }
+
+	  var options = {
+            url: `https://api.spotify.com/v1/me/tracks?offset=${offset}&limit=${limit}`,
+            headers: { 'Authorization': 'Bearer ' + access_token },
+          };
+
+          // use the access token to access the Spotify Web API
+	  request.get(options, callbackFunction);
 
         // we can also pass the token to the browser to make requests from there
         res.redirect('/#' +
