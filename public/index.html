@@ -137,7 +137,6 @@
                       'Authorization': 'Bearer ' + access_token
                     },
                     success: function(tracksResponse) {
-                      console.log(tracksResponse);
                       tracksPlaceholder.innerHTML = tracksTemplate(tracksResponse);
 
                       $('#login').hide();
