@@ -102,7 +102,7 @@ app.get('/callback', function(req, res) {
       			  artists: item.track.artists.map(a => a.name)
       		  }));
 
-      		  console.log(`Retrieved ${parsedBody.offset + parsedBody.limit} of ${parsedBody.total} tracks`);
+      		  console.log(`Retrieved ${Math.min(parsedBody.offset + parsedBody.limit, parsedBody.total)} of ${parsedBody.total} tracks`);
 
       		  allTracks.push(tracks);
 
