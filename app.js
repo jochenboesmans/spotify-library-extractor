@@ -14,8 +14,8 @@ var querystring = require('querystring');
 var cookieParser = require('cookie-parser');
 var fs = require('fs');
 
-var client_id = require('./client_id.js'); // Your client id
-var client_secret = require('./client_secret.js'); // Your secret
+var client_id = require('./.client_id.js'); // Your client id
+var client_secret = require('./.client_secret.js'); // Your secret
 var redirect_uri = 'http://localhost:8888/callback'; // Your redirect uri
 
 /**
@@ -89,44 +89,48 @@ app.get('/callback', function(req, res) {
 
     request.post(authOptions, function(error, response, body) {
       if (!error && response.statusCode === 200) {
-
         var access_token = body.access_token,
             refresh_token = body.refresh_token;
-	    offset = 0;
-	    limit = 50;
 
-	var allTracks = [];
+        const allTracks = [];
 
-	const callbackFunction = function(error, response, body) {
-		  if (!error) {
-			  const tracks = JSON.parse(body).items.map(item => ({
-				  name: item.track.name,
-				  artists: item.track.artists.map(a => a.name)
-			  }));
+      	const callbackFunction = function(error, response, body) {
+      	  if (!error && response.statusCode === 200) {
+            const parsedBody = JSON.parse(body);
+      		  const tracks = parsedBody.items.map(item => ({
+      			  name: item.track.name,
+      			  artists: item.track.artists.map(a => a.name)
+      		  }));
 
-			  console.log(`track: ${JSON.parse(body).offset}`);
+      		  console.log(`requesting tracks: ${parsedBody.offset} - ${parsedBody.offset + parsedBody.limit - 1}`);
 
-			  allTracks.push(tracks);
+      		  allTracks.push(tracks);
 
-			  if (JSON.parse(body).next && JSON.parse(body).next !== "") {
-			  var options = {
-				  url: JSON.parse(body).next,
-				  headers: { 'Authorization': 'Bearer ' + access_token }
-			  }
-			  return request.get(options, callbackFunction);
-			  } else {
-				  return fs.writeFile("./tracks.json", JSON.stringify(allTracks), err => { console.log("done"); } );
-			  }
-		  }
-	  }
+      		  if (parsedBody.next && parsedBody.next !== "") {
+      			  const options = {
+      				  url: parsedBody.next,
+      				  headers: { 'Authorization': 'Bearer ' + access_token }
+      			  }
+      		    return request.get(options, callbackFunction);
+      		  } else {
+      			  return fs.writeFile("./tracks.json", JSON.stringify(allTracks), err => {
+                if (err) {
+                  console.log(err);
+                } else {
+                  console.log("Your Spotify library can now be found in ./tracks.json");
+                }
+              });
+      		  }
+      	  }
+        }
 
-	  var options = {
-            url: `https://api.spotify.com/v1/me/tracks?offset=${offset}&limit=${limit}`,
-            headers: { 'Authorization': 'Bearer ' + access_token },
-          };
+        const initialOptions = {
+          url: `https://api.spotify.com/v1/me/tracks?offset=${0}&limit=${50}`,
+          headers: { 'Authorization': 'Bearer ' + access_token },
+        };
 
-          // use the access token to access the Spotify Web API
-	  request.get(options, callbackFunction);
+        // use the access token to access the Spotify Web API
+      	request.get(initialOptions, callbackFunction);
 
         // we can also pass the token to the browser to make requests from there
         res.redirect('/#' +
