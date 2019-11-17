@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
   <head>
-    <title>Example of the Authorization Code flow with Spotify</title>
+    <title>Authorization flow for Spotify</title>
     <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
     <style type="text/css">
       #login, #loggedin {
@@ -19,11 +19,13 @@
   <body>
     <div class="container">
       <div id="login">
-        <h1>This is an example of the Authorization Code flow</h1>
+        <h1>Log in to access your Spotify library</h1>
         <a href="/login" class="btn btn-primary">Log in with Spotify</a>
       </div>
       <div id="loggedin">
         <div id="user-profile">
+        </div>
+        <div id="tracks">
         </div>
         <div id="oauth">
         </div>
@@ -49,6 +51,21 @@
           </dl>
         </div>
       </div>
+    </script>
+
+    <script id="tracks-template" type="text/x-handlebars-template">
+      <h1>Some of your tracks</h1>
+      <ul class="tracks-list">
+        {{#each items}}
+          <li>{{this.track.name}}:
+            <ul class="artists-list">
+              {{#each this.track.artists}}
+                <li>{{this.name}}</li>
+              {{/each}}
+            </ul>
+          </li>
+        {{/each}}
+      </ul>
     </script>
 
     <script id="oauth-template" type="text/x-handlebars-template">
@@ -86,6 +103,10 @@
             oauthTemplate = Handlebars.compile(oauthSource),
             oauthPlaceholder = document.getElementById('oauth');
 
+        var tracksSource = document.getElementById('tracks-template').innerHTML,
+            tracksTemplate = Handlebars.compile(tracksSource),
+            tracksPlaceholder = document.getElementById('tracks');
+
         var params = getHashParams();
 
         var access_token = params.access_token,
@@ -110,10 +131,22 @@
                 success: function(response) {
                   userProfilePlaceholder.innerHTML = userProfileTemplate(response);
 
-                  $('#login').hide();
-                  $('#loggedin').show();
+                  $.ajax({
+                    url: 'https://api.spotify.com/v1/me/tracks?limit=5&offset=0',
+                    headers: {
+                      'Authorization': 'Bearer ' + access_token
+                    },
+                    success: function(tracksResponse) {
+                      console.log(tracksResponse);
+                      tracksPlaceholder.innerHTML = tracksTemplate(tracksResponse);
+
+                      $('#login').hide();
+                      $('#loggedin').show();
+                    }
+                  });
                 }
             });
+
           } else {
               // render initial screen
               $('#login').show();
@@ -139,4 +172,3 @@
     </script>
   </body>
 </html>
-
