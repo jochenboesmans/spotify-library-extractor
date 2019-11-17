@@ -55,17 +55,16 @@
 
     <script id="tracks-template" type="text/x-handlebars-template">
       <h1>Some of your tracks</h1>
-      <ul class="tracks-list">
+      <dl class="dl-horizontal">
         {{#each items}}
-          <li>{{this.track.name}}:
-            <ul class="artists-list">
-              {{#each this.track.artists}}
-                <li>{{this.name}}</li>
-              {{/each}}
-            </ul>
-          </li>
+          <dt>Track name</dt><dd class="clearfix">{{this.track.name}}</dd>
+          <dl class="dl-horizontal">
+            {{#each this.track.artists}}
+              <dt>Artist name</dt><dd>{{this.name}}</dd>
+            {{/each}}
+          </dl>
         {{/each}}
-      </ul>
+      </dl>
     </script>
 
     <script id="oauth-template" type="text/x-handlebars-template">
