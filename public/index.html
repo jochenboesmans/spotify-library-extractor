@@ -27,8 +27,6 @@
         </div>
         <div id="tracks">
         </div>
-        <div id="oauth">
-        </div>
         <button class="btn btn-default" id="obtain-new-token">Obtain new token using the refresh token</button>
       </div>
     </div>
@@ -54,25 +52,9 @@
     </script>
 
     <script id="tracks-template" type="text/x-handlebars-template">
-      <h1>Some of your tracks</h1>
-      <dl class="dl-horizontal">
-        {{#each items}}
-          <dt>Track name</dt><dd class="clearfix">{{this.track.name}}</dd>
-          <dl class="dl-horizontal">
-            {{#each this.track.artists}}
-              <dt>Artist name</dt><dd>{{this.name}}</dd>
-            {{/each}}
-          </dl>
-        {{/each}}
-      </dl>
-    </script>
-
-    <script id="oauth-template" type="text/x-handlebars-template">
-      <h2>oAuth info</h2>
-      <dl class="dl-horizontal">
-        <dt>Access token</dt><dd class="text-overflow">{{access_token}}</dd>
-        <dt>Refresh token</dt><dd class="text-overflow">{{refresh_token}}</dd>
-      </dl>
+      <h1>Here is your library</h1>
+      <div id="status-text">{{statusText}}</div>
+      <a id="download" download="tracks.json" href="{{href}}">Download</a>
     </script>
 
     <script src="//cdnjs.cloudflare.com/ajax/libs/handlebars.js/2.0.0-alpha.1/handlebars.min.js"></script>
@@ -98,10 +80,6 @@
             userProfileTemplate = Handlebars.compile(userProfileSource),
             userProfilePlaceholder = document.getElementById('user-profile');
 
-        var oauthSource = document.getElementById('oauth-template').innerHTML,
-            oauthTemplate = Handlebars.compile(oauthSource),
-            oauthPlaceholder = document.getElementById('oauth');
-
         var tracksSource = document.getElementById('tracks-template').innerHTML,
             tracksTemplate = Handlebars.compile(tracksSource),
             tracksPlaceholder = document.getElementById('tracks');
@@ -116,35 +94,48 @@
           alert('There was an error during the authentication');
         } else {
           if (access_token) {
-            // render oauth info
-            oauthPlaceholder.innerHTML = oauthTemplate({
-              access_token: access_token,
-              refresh_token: refresh_token
-            });
+            $('#login').hide();
+            $('#loggedin').show();
+
+            const allTracks = [];
+
+          	const callbackFunction = function(parsedBody, status) {
+          	  if (status === "success") {
+          		  const tracks = parsedBody.items.map(item => ({
+          			  name: item.track.name,
+          			  artists: item.track.artists.map(a => a.name)
+          		  }));
+
+                const statusText = `Retrieved ${Math.min(parsedBody.offset + parsedBody.limit, parsedBody.total)} of ${parsedBody.total} tracks`;
+
+          		  allTracks.push(tracks);
+                const stringifiedTracks = JSON.stringify(allTracks);
+                const blob = new Blob([stringifiedTracks], {type: "application/json"});
+                const href = URL.createObjectURL(blob);
+                tracksPlaceholder.innerHTML = tracksTemplate({library: JSON.stringify(allTracks), href: href, statusText: statusText});
+
+          		  if (parsedBody.next && parsedBody.next !== "") {
+                  $.ajax({
+                    url: parsedBody.next,
+                    headers: { 'Authorization': 'Bearer ' + access_token },
+                    success: callbackFunction
+                  });
+          		  }
+          	  }
+            }
 
             $.ajax({
                 url: 'https://api.spotify.com/v1/me',
-                headers: {
-                  'Authorization': 'Bearer ' + access_token
-                },
+                headers: { 'Authorization': 'Bearer ' + access_token },
                 success: function(response) {
                   userProfilePlaceholder.innerHTML = userProfileTemplate(response);
-
                   $.ajax({
-                    url: 'https://api.spotify.com/v1/me/tracks?limit=5&offset=0',
-                    headers: {
-                      'Authorization': 'Bearer ' + access_token
-                    },
-                    success: function(tracksResponse) {
-                      tracksPlaceholder.innerHTML = tracksTemplate(tracksResponse);
-
-                      $('#login').hide();
-                      $('#loggedin').show();
-                    }
+                    url: 'https://api.spotify.com/v1/me/tracks?limit=50&offset=0',
+                    headers: { 'Authorization': 'Bearer ' + access_token },
+                    success: callbackFunction
                   });
                 }
-            });
-
+              });
           } else {
               // render initial screen
               $('#login').show();

@@ -92,46 +92,6 @@ app.get('/callback', function(req, res) {
         var access_token = body.access_token,
             refresh_token = body.refresh_token;
 
-        const allTracks = [];
-
-      	const callbackFunction = function(error, response, body) {
-      	  if (!error && response.statusCode === 200) {
-            const parsedBody = JSON.parse(body);
-      		  const tracks = parsedBody.items.map(item => ({
-      			  name: item.track.name,
-      			  artists: item.track.artists.map(a => a.name)
-      		  }));
-
-      		  console.log(`Retrieved ${Math.min(parsedBody.offset + parsedBody.limit, parsedBody.total)} of ${parsedBody.total} tracks`);
-
-      		  allTracks.push(tracks);
-
-      		  if (parsedBody.next && parsedBody.next !== "") {
-      			  const options = {
-      				  url: parsedBody.next,
-      				  headers: { 'Authorization': 'Bearer ' + access_token }
-      			  }
-      		    return request.get(options, callbackFunction);
-      		  } else {
-      			  return fs.writeFile("./tracks.json", JSON.stringify(allTracks), err => {
-                if (err) {
-                  console.log(err);
-                } else {
-                  console.log("Your Spotify library can now be found in ./tracks.json");
-                }
-              });
-      		  }
-      	  }
-        }
-
-        const initialOptions = {
-          url: `https://api.spotify.com/v1/me/tracks?offset=${0}&limit=${50}`,
-          headers: { 'Authorization': 'Bearer ' + access_token },
-        };
-
-        // use the access token to access the Spotify Web API
-      	request.get(initialOptions, callbackFunction);
-
         // we can also pass the token to the browser to make requests from there
         res.redirect('/#' +
           querystring.stringify({
