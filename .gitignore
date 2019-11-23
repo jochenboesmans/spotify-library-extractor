@@ -1,6 +1,2 @@
 node_modules/
-
-.client_id.js
-.client_secret.js
-
-tracks.json
+.env
