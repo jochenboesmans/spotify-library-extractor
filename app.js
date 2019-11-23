@@ -132,5 +132,6 @@ app.get('/refresh_token', function(req, res) {
   });
 });
 
-console.log('Listening on 8888');
-app.listen(8888);
+const PORT = process.env.PORT || 8888;
+console.log(`Listening on ${PORT}`);
+app.listen(PORT);
