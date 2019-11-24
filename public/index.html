@@ -152,7 +152,7 @@
                     type: item.track.type,
             		  }));
 
-                  const statusText = `Retrieved ${Math.min(parsedBody.offset + parsedBody.limit, parsedBody.total)} of ${parsedBody.total} tracks`;
+                  const statusText = `Received ${Math.min(parsedBody.offset + parsedBody.limit, parsedBody.total)}/${parsedBody.total} tracks`;
 
             		  allTracks.push(tracks);
                   const stringifiedTracks = JSON.stringify(allTracks);
@@ -194,7 +194,7 @@
                     }
             		  }));
 
-                  const statusText = `Retrieved ${Math.min(parsedBody.offset + parsedBody.limit, parsedBody.total)} of ${parsedBody.total} albums`;
+                  const statusText = `Received ${Math.min(parsedBody.offset + parsedBody.limit, parsedBody.total)}/${parsedBody.total} albums`;
 
             		  allAlbums.push(albums);
                   const stringifiedAlbums = JSON.stringify(allAlbums);
