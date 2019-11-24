@@ -42,7 +42,7 @@
         const statusText = `Received ${Math.min(parsedBody.offset + parsedBody.limit, parsedBody.total)}/${parsedBody.total} tracks`;
 
         allTracks.push(tracks);
-        const stringifiedTracks = JSON.stringify(allTracks);
+        const stringifiedTracks = JSON.stringify(allTracks, null, 2);
         const blob = new Blob([stringifiedTracks], {type: "application/json"});
         const href = URL.createObjectURL(blob);
         tracksPlaceholder.innerHTML = tracksTemplate({library: JSON.stringify(allTracks), href: href, statusText: statusText});
@@ -84,7 +84,7 @@
         const statusText = `Received ${Math.min(parsedBody.offset + parsedBody.limit, parsedBody.total)}/${parsedBody.total} albums`;
 
         allAlbums.push(albums);
-        const stringifiedAlbums = JSON.stringify(allAlbums);
+        const stringifiedAlbums = JSON.stringify(allAlbums, null, 2);
         const blob = new Blob([stringifiedAlbums], {type: "application/json"});
         const href = URL.createObjectURL(blob);
         albumsPlaceholder.innerHTML = albumsTemplate({library: JSON.stringify(allAlbums), href: href, statusText: statusText});
