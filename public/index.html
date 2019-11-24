@@ -32,6 +32,8 @@
         </div>
         <div id="tracks">
         </div>
+        <div id="albums">
+        </div>
         <div id="oauth">
           <button class="btn btn-default" id="obtain-new-token">Obtain new token using the refresh token</button>
         </div>
@@ -64,6 +66,12 @@
       <a id="save" download="tracks.json" href="{{href}}">Save</a>
     </script>
 
+    <script id="albums-template" type="text/x-handlebars-template">
+      <h1>Your albums</h1>
+      <div id="status-text">{{statusText}}</div>
+      <a id="save" download="albums.json" href="{{href}}">Save</a>
+    </script>
+
     <script src="//cdnjs.cloudflare.com/ajax/libs/handlebars.js/2.0.0-alpha.1/handlebars.min.js"></script>
     <script src="https://code.jquery.com/jquery-1.10.1.min.js"></script>
     <script>
@@ -90,6 +98,10 @@
         var tracksSource = document.getElementById('tracks-template').innerHTML,
             tracksTemplate = Handlebars.compile(tracksSource),
             tracksPlaceholder = document.getElementById('tracks');
+
+        var albumsSource = document.getElementById('albums-template').innerHTML,
+            albumsTemplate = Handlebars.compile(albumsSource),
+            albumsPlaceholder = document.getElementById('albums');
 
         var params = getHashParams();
 
@@ -162,7 +174,49 @@
                 headers: { 'Authorization': 'Bearer ' + access_token },
                 success: callbackFunction
               });
-          })
+          });
+
+          document.getElementById('request-albums-button').addEventListener('click', function() {
+              const allAlbums = [];
+              const callbackFunction = function(parsedBody, status) {
+            	  if (status === "success") {
+            		  const albums = parsedBody.items.map(item => ({
+            			  added_at: item.added_at,
+                    album: {
+                      album_type: item.album.album_type,
+                      artists: item.album.artists.map(a => ({
+                        name: a.name,
+                        type: a.type,
+                      })),
+                      external_ids: item.album.external_ids,
+                      name: item.album.name,
+                      release_date: item.album.release_date,
+                    }
+            		  }));
+
+                  const statusText = `Retrieved ${Math.min(parsedBody.offset + parsedBody.limit, parsedBody.total)} of ${parsedBody.total} albums`;
+
+            		  allAlbums.push(albums);
+                  const stringifiedAlbums = JSON.stringify(allAlbums);
+                  const blob = new Blob([stringifiedAlbums], {type: "application/json"});
+                  const href = URL.createObjectURL(blob);
+                  albumsPlaceholder.innerHTML = albumsTemplate({library: JSON.stringify(allAlbums), href: href, statusText: statusText});
+
+            		  if (parsedBody.next && parsedBody.next !== "") {
+                    $.ajax({
+                      url: parsedBody.next,
+                      headers: { 'Authorization': 'Bearer ' + access_token },
+                      success: callbackFunction
+                    });
+            		  }
+                }
+              }
+              $.ajax({
+                url: 'https://api.spotify.com/v1/me/albums?limit=50&offset=0',
+                headers: { 'Authorization': 'Bearer ' + access_token },
+                success: callbackFunction
+              });
+          });
 
           document.getElementById('obtain-new-token').addEventListener('click', function() {
             $.ajax({
