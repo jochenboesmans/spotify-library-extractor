@@ -18,21 +18,25 @@
     const callbackFunction = function(parsedBody, status) {
       if (status === "success") {
         const tracks = parsedBody.items.map(item => ({
-          name: item.track.name,
-          artists: item.track.artists.map(a => ({
-            name: a.name,
-            type: a.type,
-          })),
-          album: {
-            name: item.track.album.name,
-            release_date: item.track.album.release_date,
-          },
-          disc_number: item.track.disc_number,
-          duration_ms: item.track.duration_ms,
-          explicit: item.track.explicit,
-          external_ids: item.track.external_ids,
-          track_number: item.track.track_number,
-          type: item.track.type,
+          added_at: item.added_at,
+          track: {
+            name: item.track.name,
+            artists: item.track.artists.map(a => ({
+              name: a.name,
+              type: a.type,
+            })),
+            album: {
+              name: item.track.album.name,
+              release_date: item.track.album.release_date,
+              type: item.track.album.type,
+            },
+            disc_number: item.track.disc_number,
+            duration_ms: item.track.duration_ms,
+            explicit: item.track.explicit,
+            external_ids: item.track.external_ids,
+            track_number: item.track.track_number,
+            type: item.track.type,
+          }
         }));
 
         const statusText = `Received ${Math.min(parsedBody.offset + parsedBody.limit, parsedBody.total)}/${parsedBody.total} tracks`;
